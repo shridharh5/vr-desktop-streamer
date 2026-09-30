@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>Remote Desktop Streamer (2D / VR Split)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Container for video displays */
+    #display-container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      background: #000;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    /* 2D Mode: Single fullscreen centered video */
+    .mode-2d #display-container {
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
+    .mode-2d .video-pane {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mode-2d #pane-right {
+      display: none;
+    }
+    .mode-2d video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* VR Mode: Pure Side-by-Side (SBS) split */
+    .mode-vr #display-container {
+      flex-direction: row;
+    }
+    .mode-vr .video-pane {
+      width: 50vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .mode-vr #pane-left {
+      border-right: 1px solid rgba(255, 255, 255, 0.25);
+    }
+    .mode-vr #pane-right {
+      border-left: 1px solid rgba(255, 255, 255, 0.25);
+    }
+    .mode-vr video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform: scale(0.92); /* Comfortable margin for VR lenses */
+    }
+
+    /* Top Floating Controls Bar */
+    #top-bar {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 8px 16px;
+      border-radius: 30px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .btn {
+      background: #0284c7;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn:active {
+      background: #0369a1;
+    }
+    .btn-toggle {
+      background: #475569;
+    }
+    .status-text {
+      color: #94a3b8;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      margin-right: 8px;
+    }
+
+    /* Start / Permission Overlay */
+    #start-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 15, 25, 0.96);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      color: white;
+      text-align: center;
+      padding: 24px;
+    }
+    .card {
+      background: #1e2430;
+      padding: 28px;
+      border-radius: 20px;
+      max-width: 440px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 1.35rem;
+      margin-bottom: 12px;
+      color: #38bdf8;
+    }
+    p {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+    #big-start-btn {
+      width: 100%;
+      padding: 16px;
+      font-size: 1.05rem;
+      background: #10b981;
+      border-radius: 12px;
+    }
+    #log-view {
+      margin-top: 15px;
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      background: #090d16;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: left;
+      max-height: 90px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body class="mode-2d">
+
+  <div id="start-overlay">
+    <div class="card">
+      <h1>📺 Desktop Streamer</h1>
+      <p>Direct low-latency desktop stream with instant 2D ⇄ VR Box Split Screen toggle.</p>
+      <button class="btn" id="big-start-btn">▶ Connect & Start Stream</button>
+      <div id="log-view">> Tap button to connect...</div>
+    </div>
+  </div>
+
+  <div id="top-bar">
+    <span class="status-text" id="status-label">⚪ Connecting...</span>
+    <button class="btn btn-toggle" id="mode-btn">🥽 Switch to VR Split</button>
+    <button class="btn" id="fs-btn">⛶ Fullscreen</button>
+  </div>
+
+  <div id="display-container">
+    <div class="video-pane" id="pane-left">
+      <video id="video-left" playsinline autoplay muted></video>
+    </div>
+    <div class="video-pane" id="pane-right">
+      <video id="video-right" playsinline autoplay muted></video>
+    </div>
+  </div>
+
+  <script>
+    const videoLeft = document.getElementById('video-left');
+    const videoRight = document.getElementById('video-right');
+    const statusLabel = document.getElementById('status-label');
+    const modeBtn = document.getElementById('mode-btn');
+    const fsBtn = document.getElementById('fs-btn');
+    const startOverlay = document.getElementById('start-overlay');
+    const bigStartBtn = document.getElementById('big-start-btn');
+    const logView = document.getElementById('log-view');
+
+    let isVRMode = false;
+    let streamObj = null;
+    let pc = null;
+
+    function log(text) {
+      console.log(text);
+      logView.innerHTML += "<br/>> " + text;
+      logView.scrollTop = logView.scrollHeight;
+    }
+
+    async function connectWebRTC() {
+      try {
+        log("Creating RTCPeerConnection...");
+        pc = new RTCPeerConnection({
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+          ]
+        });
+
+        pc.ontrack = (event) => {
+          log("Track received: " + event.track.kind);
+          if (event.track.kind === 'video') {
+            streamObj = event.streams[0];
+            videoLeft.srcObject = streamObj;
+            videoRight.srcObject = streamObj;
+
+            videoLeft.play();
+            videoRight.play();
+
+            statusLabel.innerText = "🟢 Connected (60 FPS)";
+            statusLabel.style.color = "#34d399";
+            startOverlay.style.display = "none";
+          }
+        };
+
+        pc.oniceconnectionstatechange = () => {
+          log("ICE State: " + pc.iceConnectionState);
+          if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+            statusLabel.innerText = "🟢 Streaming";
+            statusLabel.style.color = "#34d399";
+          } else if (pc.iceConnectionState === 'failed') {
+            statusLabel.innerText = "❌ ICE Failed";
+            statusLabel.style.color = "#f87171";
+          }
+        };
+
+        pc.addTransceiver('video', { direction: 'recvonly' });
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        log("Gathering local ICE candidates...");
+
+        await new Promise((resolve) => {
+          if (pc.iceGatheringState === 'complete') {
+            resolve();
+          } else {
+            const checkState = () => {
+              if (pc.iceGatheringState === 'complete') {
+                pc.removeEventListener('icegatheringstatechange', checkState);
+                resolve();
+              }
+            };
+            pc.addEventListener('icegatheringstatechange', checkState);
+            setTimeout(resolve, 2500);
+          }
+        });
+
+        log("Sending offer to host...");
+        const response = await fetch('/offer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sdp: pc.localDescription.sdp, type: pc.localDescription.type })
+        });
+
+        if (!response.ok) throw new Error("HTTP " + response.status);
+
+        const answer = await response.json();
+        log("Setting remote description...");
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        log("Connected! Starting video playback...");
+
+      } catch (err) {
+        log("Error: " + err.message);
+        statusLabel.innerText = "❌ " + err.message;
+        statusLabel.style.color = "#f87171";
+        bigStartBtn.disabled = false;
+        bigStartBtn.innerText = "Retry Connection";
+      }
+    }
+
+    // Toggle 2D / VR Split Mode
+    modeBtn.addEventListener('click', () => {
+      isVRMode = !isVRMode;
+      if (isVRMode) {
+        document.body.className = "mode-vr";
+        modeBtn.innerText = "📺 Switch to 2D Mode";
+        modeBtn.style.background = "#0284c7";
+      } else {
+        document.body.className = "mode-2d";
+        modeBtn.innerText = "🥽 Switch to VR Split";
+        modeBtn.style.background = "#475569";
+      }
+    });
+
+    // Fullscreen toggle
+    fsBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+
+    // Start stream
+    bigStartBtn.addEventListener('click', async () => {
+      bigStartBtn.disabled = true;
+      bigStartBtn.innerText = "Connecting to Host...";
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {});
+      }
+      await connectWebRTC();
+    });
+
+    // Double tap screen anywhere to toggle 2D / VR
+    let lastTap = 0;
+    window.addEventListener('touchend', (e) => {
+      const now = new Date().getTime();
+      if (now - lastTap < 350) {
+        modeBtn.click();
+      }
+      lastTap = now;
+    });
+  </script>
+</body>
+</html>
