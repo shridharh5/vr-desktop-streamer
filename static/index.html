@@ -20,7 +20,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* Container for video displays */
+    /* Main viewport container */
     #display-container {
       width: 100vw;
       height: 100vh;
@@ -29,9 +29,11 @@
       position: absolute;
       top: 0;
       left: 0;
+      overflow: hidden;
+      touch-action: none;
     }
 
-    /* 2D Mode */
+    /* 2D Mode: Single fullscreen centered video */
     .mode-2d #display-container {
       flex-direction: row;
       align-items: center;
@@ -64,13 +66,13 @@
       position: relative;
     }
     .mode-vr #pane-left {
-      border-right: 1px solid rgba(255, 255, 255, 0.2);
+      border-right: 1px solid rgba(255, 255, 255, 0.25);
     }
     .mode-vr #pane-right {
-      border-left: 1px solid rgba(255, 255, 255, 0.2);
+      border-left: 1px solid rgba(255, 255, 255, 0.25);
     }
 
-    /* Video transforms controlled dynamically via JS */
+    /* Video transforms wrapper */
     .video-wrapper {
       width: 100%;
       height: 100%;
@@ -79,7 +81,6 @@
       justify-content: center;
       will-change: transform;
       position: relative;
-      touch-action: none;
     }
     video {
       width: 100%;
@@ -91,17 +92,16 @@
     /* Virtual Pointer Reticle on Screen */
     .virtual-cursor {
       position: absolute;
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       border: 2px solid #38bdf8;
-      background: rgba(56, 189, 248, 0.35);
+      background: rgba(56, 189, 248, 0.4);
       border-radius: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none;
       z-index: 50;
       display: none;
       box-shadow: 0 0 10px rgba(56, 189, 248, 0.9);
-      transition: transform 0.05s linear;
     }
     .virtual-cursor::after {
       content: '';
@@ -115,13 +115,13 @@
       transform: translate(-50%, -50%);
     }
     .virtual-cursor.clicking {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       background: rgba(239, 68, 68, 0.6);
       border-color: #ef4444;
     }
 
-    /* Top Floating Header Controls */
+    /* Top Floating Controls Bar */
     #top-bar {
       position: absolute;
       top: 10px;
@@ -130,13 +130,13 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      z-index: 300;
-      background: rgba(15, 23, 42, 0.92);
+      z-index: 500;
+      background: rgba(15, 23, 42, 0.94);
       border: 1px solid rgba(255, 255, 255, 0.25);
       padding: 6px 12px;
       border-radius: 30px;
       backdrop-filter: blur(10px);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.7);
       max-width: 96vw;
       overflow-x: auto;
     }
@@ -144,8 +144,8 @@
       background: #0284c7;
       color: white;
       border: none;
-      padding: 7px 13px;
-      font-size: 0.8rem;
+      padding: 8px 14px;
+      font-size: 0.82rem;
       font-weight: 600;
       border-radius: 20px;
       cursor: pointer;
@@ -153,10 +153,10 @@
       align-items: center;
       gap: 5px;
       white-space: nowrap;
-      transition: background 0.2s, transform 0.1s;
+      transition: background 0.15s, transform 0.1s;
     }
     .btn:active {
-      transform: scale(0.96);
+      transform: scale(0.95);
     }
     .btn-toggle {
       background: #475569;
@@ -166,7 +166,7 @@
     }
     .btn-mouse.active {
       background: #ef4444;
-      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
     }
     .btn-panel {
       background: #334155;
@@ -181,54 +181,56 @@
       white-space: nowrap;
     }
 
-    /* Floating View Adjustment Panel */
+    /* Floating View Adjustment Modal Panel */
     #slider-panel {
       position: absolute;
-      bottom: 18px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.96);
-      border: 1px solid #38bdf8;
+      background: rgba(15, 23, 42, 0.98);
+      border: 2px solid #38bdf8;
       padding: 16px 20px;
-      border-radius: 18px;
-      z-index: 350;
-      backdrop-filter: blur(14px);
+      border-radius: 20px;
+      z-index: 600;
+      backdrop-filter: blur(16px);
       color: #e2e8f0;
       display: flex;
       flex-direction: column;
       gap: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.85);
       width: 90vw;
-      max-width: 360px;
-      touch-action: pan-y;
+      max-width: 380px;
+      touch-action: auto;
     }
     .panel-title {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: bold;
       color: #38bdf8;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      padding-bottom: 8px;
     }
     .close-btn {
       background: none;
       border: none;
       color: #94a3b8;
-      font-size: 1.1rem;
+      font-size: 1.3rem;
       cursor: pointer;
+      line-height: 1;
+      padding: 0 4px;
     }
     .slider-row {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
     }
     .slider-header {
       display: flex;
       justify-content: space-between;
-      font-size: 0.8rem;
-      color: #94a3b8;
+      font-size: 0.82rem;
+      color: #cbd5e1;
     }
     .slider-header span.val {
       color: #38bdf8;
@@ -236,31 +238,31 @@
     }
     input[type=range] {
       width: 100%;
-      height: 8px;
-      border-radius: 4px;
+      height: 10px;
+      border-radius: 5px;
       background: #334155;
       outline: none;
       -webkit-appearance: none;
     }
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       background: #38bdf8;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
     .action-row {
       display: flex;
       gap: 8px;
-      margin-top: 4px;
+      margin-top: 6px;
     }
     .action-row .btn {
       flex: 1;
       justify-content: center;
-      padding: 6px 10px;
-      font-size: 0.75rem;
+      padding: 8px 12px;
+      font-size: 0.8rem;
     }
 
     /* Start / Permission Overlay */
@@ -275,7 +277,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 500;
+      z-index: 700;
       color: white;
       text-align: center;
       padding: 24px;
@@ -318,21 +320,22 @@
       overflow-y: auto;
     }
 
-    /* Mouse Mode Banner */
-    #mouse-banner {
+    /* Helper instruction tooltip */
+    #gesture-hint {
       position: absolute;
       top: 55px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(16, 185, 129, 0.9);
-      color: white;
-      padding: 4px 14px;
-      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #38bdf8;
+      padding: 5px 14px;
+      border-radius: 15px;
       font-size: 0.75rem;
-      font-weight: 600;
-      z-index: 250;
+      z-index: 400;
       pointer-events: none;
       display: none;
+      text-align: center;
     }
   </style>
 </head>
@@ -341,13 +344,13 @@
   <div id="start-overlay">
     <div class="card">
       <h1>📺 Desktop Streamer</h1>
-      <p>Direct low-latency desktop stream with separated view adjustments and remote mouse controls.</p>
+      <p>Direct low-latency desktop stream with full touch scroll, pinch-zoom, and separated remote mouse control.</p>
       <button class="btn" id="big-start-btn">▶ Connect & Start Stream</button>
       <div id="log-view">> Tap button to connect...</div>
     </div>
   </div>
 
-  <div id="mouse-banner">🖱️ Remote Mouse Control Active (Tap anywhere to click & drag)</div>
+  <div id="gesture-hint">👆 Drag finger to scroll/pan | Pinch to zoom | Tap "🖱️ Mouse" to click PC</div>
 
   <div id="top-bar">
     <span class="status-text" id="status-label">⚪ Connecting...</span>
@@ -364,22 +367,31 @@
       <button class="close-btn" id="close-panel-btn">✕</button>
     </div>
 
-    <!-- Zoom Slider (Works in both 2D and VR mode) -->
+    <!-- Zoom Slider -->
     <div class="slider-row">
       <div class="slider-header">
         <span>🔍 Zoom Scale</span>
         <span class="val" id="zoom-val">100%</span>
       </div>
-      <input type="range" id="zoom-slider" min="0.4" max="2.5" step="0.05" value="1.0">
+      <input type="range" id="zoom-slider" min="0.4" max="3.0" step="0.05" value="1.0">
     </div>
 
-    <!-- Pan Offset Slider (Scroll desktop view left/right) -->
+    <!-- Horizontal Pan Slider (Scroll X) -->
     <div class="slider-row">
       <div class="slider-header">
-        <span>↔️ Pan Position (Scroll X)</span>
-        <span class="val" id="pan-val">0 px</span>
+        <span>↔️ Scroll X (Horizontal Pan)</span>
+        <span class="val" id="panx-val">0 px</span>
       </div>
-      <input type="range" id="pan-slider" min="-300" max="300" step="5" value="0">
+      <input type="range" id="panx-slider" min="-600" max="600" step="10" value="0">
+    </div>
+
+    <!-- Vertical Pan Slider (Scroll Y) -->
+    <div class="slider-row">
+      <div class="slider-header">
+        <span>↕️ Scroll Y (Vertical Pan)</span>
+        <span class="val" id="pany-val">0 px</span>
+      </div>
+      <input type="range" id="pany-slider" min="-400" max="400" step="10" value="0">
     </div>
 
     <!-- Horizontal IPD Shift Slider (Exclusive for VR mode eye spacing) -->
@@ -388,11 +400,11 @@
         <span>👀 Eye Spacing Shift (IPD)</span>
         <span class="val" id="ipd-val">0 px</span>
       </div>
-      <input type="range" id="ipd-slider" min="-120" max="120" step="2" value="0">
+      <input type="range" id="ipd-slider" min="-150" max="150" step="2" value="0">
     </div>
 
     <div class="action-row">
-      <button class="btn btn-toggle" id="reset-view-btn">↺ Reset View</button>
+      <button class="btn btn-toggle" id="reset-view-btn">↺ Reset View (100%)</button>
     </div>
   </div>
 
@@ -420,7 +432,7 @@
     const cursorRight = document.getElementById('cursor-right');
     const statusLabel = document.getElementById('status-label');
     const mouseBtn = document.getElementById('mouse-btn');
-    const mouseBanner = document.getElementById('mouse-banner');
+    const gestureHint = document.getElementById('gesture-hint');
     const modeBtn = document.getElementById('mode-btn');
     const tuneBtn = document.getElementById('tune-btn');
     const fsBtn = document.getElementById('fs-btn');
@@ -432,48 +444,65 @@
     const closePanelBtn = document.getElementById('close-panel-btn');
     const resetViewBtn = document.getElementById('reset-view-btn');
     const zoomSlider = document.getElementById('zoom-slider');
-    const panSlider = document.getElementById('pan-slider');
+    const panxSlider = document.getElementById('panx-slider');
+    const panySlider = document.getElementById('pany-slider');
     const ipdSlider = document.getElementById('ipd-slider');
     const zoomVal = document.getElementById('zoom-val');
-    const panVal = document.getElementById('pan-val');
+    const panxVal = document.getElementById('panx-val');
+    const panyVal = document.getElementById('pany-val');
     const ipdVal = document.getElementById('ipd-val');
     const ipdContainer = document.getElementById('ipd-container');
     const displayContainer = document.getElementById('display-container');
 
     let isVRMode = false;
-    let isMouseControlActive = false; // Mouse control starts OFF so you can freely touch the UI & adjust sliders
+    let isMouseControlActive = false; // Mouse control starts OFF
     let streamObj = null;
     let pc = null;
 
     // View adjustment parameters
     let currentZoom = 1.0;
     let currentPanX = 0;
-    let currentIPDShift = 0; // Positive: moves towards center, Negative: moves outward
+    let currentPanY = 0;
+    let currentIPDShift = 0;
 
     function applyTransforms() {
       if (isVRMode) {
         ipdContainer.style.display = 'flex';
-        // Left eye: zoomed, panned, shifted right towards center by currentIPDShift
-        wrapLeft.style.transform = `scale(${currentZoom * 0.92}) translate(${currentPanX + currentIPDShift}px, 0)`;
-        // Right eye: zoomed, panned, shifted left towards center by currentIPDShift
-        wrapRight.style.transform = `scale(${currentZoom * 0.92}) translate(${currentPanX - currentIPDShift}px, 0)`;
+        wrapLeft.style.transform = `scale(${currentZoom * 0.92}) translate(${currentPanX + currentIPDShift}px, ${currentPanY}px)`;
+        wrapRight.style.transform = `scale(${currentZoom * 0.92}) translate(${currentPanX - currentIPDShift}px, ${currentPanY}px)`;
       } else {
         ipdContainer.style.display = 'none';
-        wrapLeft.style.transform = `scale(${currentZoom}) translate(${currentPanX}px, 0)`;
-        wrapRight.style.transform = `scale(${currentZoom}) translate(${currentPanX}px, 0)`;
+        wrapLeft.style.transform = `scale(${currentZoom}) translate(${currentPanX}px, ${currentPanY}px)`;
+        wrapRight.style.transform = `scale(${currentZoom}) translate(${currentPanX}px, ${currentPanY}px)`;
       }
     }
 
-    // Slider Listeners
+    function syncSliders() {
+      zoomSlider.value = currentZoom;
+      panxSlider.value = currentPanX;
+      panySlider.value = currentPanY;
+      ipdSlider.value = currentIPDShift;
+      zoomVal.innerText = `${Math.round(currentZoom * 100)}%`;
+      panxVal.innerText = `${Math.round(currentPanX)} px`;
+      panyVal.innerText = `${Math.round(currentPanY)} px`;
+      ipdVal.innerText = `${currentIPDShift > 0 ? '+' : ''}${currentIPDShift} px`;
+    }
+
     zoomSlider.addEventListener('input', (e) => {
       currentZoom = parseFloat(e.target.value);
       zoomVal.innerText = `${Math.round(currentZoom * 100)}%`;
       applyTransforms();
     });
 
-    panSlider.addEventListener('input', (e) => {
+    panxSlider.addEventListener('input', (e) => {
       currentPanX = parseInt(e.target.value);
-      panVal.innerText = `${currentPanX} px`;
+      panxVal.innerText = `${currentPanX} px`;
+      applyTransforms();
+    });
+
+    panySlider.addEventListener('input', (e) => {
+      currentPanY = parseInt(e.target.value);
+      panyVal.innerText = `${currentPanY} px`;
       applyTransforms();
     });
 
@@ -487,17 +516,12 @@
       e.stopPropagation();
       currentZoom = 1.0;
       currentPanX = 0;
+      currentPanY = 0;
       currentIPDShift = 0;
-      zoomSlider.value = 1.0;
-      panSlider.value = 0;
-      ipdSlider.value = 0;
-      zoomVal.innerText = "100%";
-      panVal.innerText = "0 px";
-      ipdVal.innerText = "0 px";
+      syncSliders();
       applyTransforms();
     });
 
-    // Panel Toggle
     tuneBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const isVisible = sliderPanel.style.display !== 'none';
@@ -511,28 +535,93 @@
       tuneBtn.classList.remove('active');
     });
 
-    // Toggle Remote Mouse Control ON / OFF
+    // Toggle Remote Mouse Control
     mouseBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       isMouseControlActive = !isMouseControlActive;
       if (isMouseControlActive) {
         mouseBtn.innerText = "🖱️ Mouse: ON";
         mouseBtn.classList.add('active');
-        mouseBanner.style.display = 'block';
-        setTimeout(() => { mouseBanner.style.display = 'none'; }, 2500);
+        gestureHint.innerText = "🖱️ Remote Mouse Active: Tap & drag anywhere to control PC cursor";
+        gestureHint.style.display = 'block';
+        setTimeout(() => { gestureHint.style.display = 'none'; }, 3000);
       } else {
         mouseBtn.innerText = "🖱️ Mouse: OFF";
         mouseBtn.classList.remove('active');
         cursorLeft.style.display = 'none';
         cursorRight.style.display = 'none';
+        gestureHint.innerText = "👆 Drag finger to scroll/pan screen | Pinch to zoom";
+        gestureHint.style.display = 'block';
+        setTimeout(() => { gestureHint.style.display = 'none'; }, 3000);
       }
     });
 
-    function log(text) {
-      console.log(text);
-      logView.innerHTML += "<br/>> " + text;
-      logView.scrollTop = logView.scrollHeight;
+    // Touch Scroll / Pan & Pinch-to-Zoom (when Mouse is OFF)
+    let touchStartX = 0, touchStartY = 0;
+    let initialPanX = 0, initialPanY = 0;
+    let initialPinchDist = 0;
+    let initialZoom = 1.0;
+    let isTouching = false;
+
+    function getDistance(t1, t2) {
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
     }
+
+    displayContainer.addEventListener('touchstart', (e) => {
+      if (isMouseControlActive) {
+        handlePointer(e, 'down');
+        return;
+      }
+      if (e.target.closest('#top-bar') || e.target.closest('#slider-panel')) return;
+
+      if (e.touches.length === 1) {
+        isTouching = true;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        initialPanX = currentPanX;
+        initialPanY = currentPanY;
+      } else if (e.touches.length === 2) {
+        initialPinchDist = getDistance(e.touches[0], e.touches[1]);
+        initialZoom = currentZoom;
+      }
+    }, { passive: true });
+
+    displayContainer.addEventListener('touchmove', (e) => {
+      if (isMouseControlActive) {
+        e.preventDefault();
+        handlePointer(e, 'move');
+        return;
+      }
+      if (e.target.closest('#top-bar') || e.target.closest('#slider-panel')) return;
+
+      if (e.touches.length === 1 && isTouching) {
+        e.preventDefault();
+        const deltaX = e.touches[0].clientX - touchStartX;
+        const deltaY = e.touches[0].clientY - touchStartY;
+        // Direct natural finger panning
+        currentPanX = Math.max(-600, Math.min(600, initialPanX + deltaX));
+        currentPanY = Math.max(-400, Math.min(400, initialPanY + deltaY));
+        syncSliders();
+        applyTransforms();
+      } else if (e.touches.length === 2 && initialPinchDist > 0) {
+        e.preventDefault();
+        const currentDist = getDistance(e.touches[0], e.touches[1]);
+        const scaleFactor = currentDist / initialPinchDist;
+        currentZoom = Math.max(0.4, Math.min(3.0, initialZoom * scaleFactor));
+        syncSliders();
+        applyTransforms();
+      }
+    }, { passive: false });
+
+    displayContainer.addEventListener('touchend', (e) => {
+      if (isMouseControlActive) {
+        handlePointer(e, 'up');
+      }
+      if (e.touches.length === 0) isTouching = false;
+      if (e.touches.length < 2) initialPinchDist = 0;
+    }, { passive: true });
 
     // Remote mouse dispatch
     let lastMoveTime = 0;
@@ -561,10 +650,7 @@
     }
 
     function handlePointer(e, actionType) {
-      // Only process mouse pointer movements when mouse control is toggled ON
       if (!isMouseControlActive) return;
-
-      // Ignore touches on UI controls
       if (e.target.closest('#top-bar') || e.target.closest('#slider-panel')) return;
 
       let clientX = e.clientX;
@@ -603,28 +689,20 @@
       }
     }
 
-    displayContainer.addEventListener('mousemove', (e) => handlePointer(e, 'move'));
-    displayContainer.addEventListener('mousedown', (e) => handlePointer(e, 'down'));
-    displayContainer.addEventListener('mouseup', (e) => handlePointer(e, 'up'));
-
-    displayContainer.addEventListener('touchmove', (e) => {
-      if (isMouseControlActive) {
-        e.preventDefault();
-        handlePointer(e, 'move');
-      }
-    }, { passive: false });
-
-    displayContainer.addEventListener('touchstart', (e) => {
+    // Mouse events on desktop PC browser
+    displayContainer.addEventListener('mousemove', (e) => {
+      if (isMouseControlActive) handlePointer(e, 'move');
+    });
+    displayContainer.addEventListener('mousedown', (e) => {
       if (isMouseControlActive) handlePointer(e, 'down');
-    }, { passive: true });
-
-    displayContainer.addEventListener('touchend', (e) => {
+    });
+    displayContainer.addEventListener('mouseup', (e) => {
       if (isMouseControlActive) handlePointer(e, 'up');
-    }, { passive: true });
+    });
 
     async function connectWebRTC() {
       try {
-        log("Creating RTCPeerConnection...");
+        logView.innerText = "> Creating RTCPeerConnection...";
         pc = new RTCPeerConnection({
           iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
@@ -633,7 +711,6 @@
         });
 
         pc.ontrack = (event) => {
-          log("Track received: " + event.track.kind);
           if (event.track.kind === 'video') {
             streamObj = event.streams[0];
             videoLeft.srcObject = streamObj;
@@ -645,11 +722,12 @@
             statusLabel.innerText = "🟢 Connected (30/60 FPS)";
             statusLabel.style.color = "#34d399";
             startOverlay.style.display = "none";
+            gestureHint.style.display = "block";
+            setTimeout(() => { gestureHint.style.display = "none"; }, 4000);
           }
         };
 
         pc.oniceconnectionstatechange = () => {
-          log("ICE State: " + pc.iceConnectionState);
           if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
             statusLabel.innerText = "🟢 Streaming";
             statusLabel.style.color = "#34d399";
@@ -663,7 +741,6 @@
 
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        log("Gathering local ICE candidates...");
 
         await new Promise((resolve) => {
           if (pc.iceGatheringState === 'complete') {
@@ -680,7 +757,6 @@
           }
         });
 
-        log("Sending offer to host...");
         const response = await fetch('/offer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -690,12 +766,9 @@
         if (!response.ok) throw new Error("HTTP " + response.status);
 
         const answer = await response.json();
-        log("Setting remote description...");
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
-        log("Connected! Starting video playback...");
 
       } catch (err) {
-        log("Error: " + err.message);
         statusLabel.innerText = "❌ " + err.message;
         statusLabel.style.color = "#f87171";
         bigStartBtn.disabled = false;
