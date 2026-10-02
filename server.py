@@ -8,10 +8,26 @@ import time
 from aiohttp import web
 from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer
 import av
+from Xlib import X, display
+from Xlib.ext import xtest
 
 ROOT = os.path.dirname(__file__)
 
 pcs = set()
+
+# Initialize Xlib for mouse input control
+try:
+    x_display = display.Display()
+    x_screen = x_display.screen()
+    x_root = x_screen.root
+    SCREEN_WIDTH = x_screen.width_in_pixels
+    SCREEN_HEIGHT = x_screen.height_in_pixels
+    print(f"Xlib display connected: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+except Exception as e:
+    x_display = None
+    SCREEN_WIDTH = 1366
+    SCREEN_HEIGHT = 768
+    print(f"Warning: Xlib initialization failed: {e}")
 
 class DesktopStreamTrack(MediaStreamTrack):
     kind = "video"
@@ -24,7 +40,7 @@ class DesktopStreamTrack(MediaStreamTrack):
             format="x11grab",
             options={
                 "framerate": "30",
-                "video_size": "1366x768",
+                "video_size": f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}",
                 "draw_mouse": "1"
             }
         )
@@ -60,6 +76,43 @@ async def index(request):
         return web.Response(content_type="text/html", text=content)
     except Exception as e:
         return web.Response(status=500, text=str(e))
+
+async def mouse_input(request):
+    if not x_display:
+        return web.json_response({"status": "error", "message": "X display unavailable"}, status=500)
+    try:
+        data = await request.json()
+        action = data.get("action")
+
+        if action == "move":
+            # Normalized coordinates (0.0 to 1.0)
+            norm_x = max(0.0, min(1.0, float(data.get("x", 0))))
+            norm_y = max(0.0, min(1.0, float(data.get("y", 0))))
+            target_x = int(norm_x * SCREEN_WIDTH)
+            target_y = int(norm_y * SCREEN_HEIGHT)
+            x_root.warp_pointer(target_x, target_y)
+            x_display.sync()
+
+        elif action == "click":
+            button = int(data.get("button", 1)) # 1: left, 3: right
+            xtest.fake_input(x_display, X.ButtonPress, button)
+            x_display.sync()
+            xtest.fake_input(x_display, X.ButtonRelease, button)
+            x_display.sync()
+
+        elif action == "down":
+            button = int(data.get("button", 1))
+            xtest.fake_input(x_display, X.ButtonPress, button)
+            x_display.sync()
+
+        elif action == "up":
+            button = int(data.get("button", 1))
+            xtest.fake_input(x_display, X.ButtonRelease, button)
+            x_display.sync()
+
+        return web.json_response({"status": "ok"})
+    except Exception as e:
+        return web.json_response({"status": "error", "message": str(e)}, status=400)
 
 async def offer(request):
     params = await request.json()
@@ -107,6 +160,7 @@ def create_app():
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", index)
     app.router.add_post("/offer", offer)
+    app.router.add_post("/input/mouse", mouse_input)
     app.router.add_static("/static/", path=os.path.join(ROOT, "static"), name="static")
     return app
 
