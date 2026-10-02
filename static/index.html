@@ -139,6 +139,12 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.7);
       max-width: 96vw;
       overflow-x: auto;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    #top-bar.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(-20px);
     }
     .btn {
       background: #0284c7;
@@ -350,7 +356,7 @@
     </div>
   </div>
 
-  <div id="gesture-hint">👆 Drag finger to scroll/pan | Pinch to zoom | Tap "🖱️ Mouse" to click PC</div>
+  <div id="gesture-hint">Double-tap screen to show/hide controls</div>
 
   <div id="top-bar">
     <span class="status-text" id="status-label">⚪ Connecting...</span>
@@ -433,6 +439,7 @@
     const statusLabel = document.getElementById('status-label');
     const mouseBtn = document.getElementById('mouse-btn');
     const gestureHint = document.getElementById('gesture-hint');
+    const topBar = document.getElementById('top-bar');
     const modeBtn = document.getElementById('mode-btn');
     const tuneBtn = document.getElementById('tune-btn');
     const fsBtn = document.getElementById('fs-btn');
@@ -455,11 +462,12 @@
     const displayContainer = document.getElementById('display-container');
 
     let isVRMode = false;
-    let isMouseControlActive = false; // Mouse control starts OFF
+    let isMouseControlActive = false;
+    let areControlsVisible = true;
     let streamObj = null;
     let pc = null;
 
-    // View adjustment parameters
+    // View adjustment parameters - persisted in memory across reconfigurations
     let currentZoom = 1.0;
     let currentPanX = 0;
     let currentPanY = 0;
@@ -522,6 +530,7 @@
       applyTransforms();
     });
 
+    // Panel Toggle
     tuneBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const isVisible = sliderPanel.style.display !== 'none';
@@ -535,6 +544,22 @@
       tuneBtn.classList.remove('active');
     });
 
+    // Function to Toggle Header & Slider Panel Visibility (Show / Hide controls)
+    function toggleControlsVisibility() {
+      areControlsVisible = !areControlsVisible;
+      if (areControlsVisible) {
+        topBar.classList.remove('hidden');
+        gestureHint.innerText = "Double-tap screen to hide controls";
+      } else {
+        topBar.classList.add('hidden');
+        sliderPanel.style.display = 'none';
+        tuneBtn.classList.remove('active');
+        gestureHint.innerText = "Double-tap screen to show controls";
+      }
+      gestureHint.style.display = 'block';
+      setTimeout(() => { gestureHint.style.display = 'none'; }, 2500);
+    }
+
     // Toggle Remote Mouse Control
     mouseBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -542,18 +567,16 @@
       if (isMouseControlActive) {
         mouseBtn.innerText = "🖱️ Mouse: ON";
         mouseBtn.classList.add('active');
-        gestureHint.innerText = "🖱️ Remote Mouse Active: Tap & drag anywhere to control PC cursor";
-        gestureHint.style.display = 'block';
-        setTimeout(() => { gestureHint.style.display = 'none'; }, 3000);
+        gestureHint.innerText = "🖱️ Remote Mouse ON: Tap & drag to control PC cursor";
       } else {
         mouseBtn.innerText = "🖱️ Mouse: OFF";
         mouseBtn.classList.remove('active');
         cursorLeft.style.display = 'none';
         cursorRight.style.display = 'none';
-        gestureHint.innerText = "👆 Drag finger to scroll/pan screen | Pinch to zoom";
-        gestureHint.style.display = 'block';
-        setTimeout(() => { gestureHint.style.display = 'none'; }, 3000);
+        gestureHint.innerText = "👆 Drag to scroll | Pinch to zoom | Double-tap for controls";
       }
+      gestureHint.style.display = 'block';
+      setTimeout(() => { gestureHint.style.display = 'none'; }, 3000);
     });
 
     // Touch Scroll / Pan & Pinch-to-Zoom (when Mouse is OFF)
@@ -562,6 +585,8 @@
     let initialPinchDist = 0;
     let initialZoom = 1.0;
     let isTouching = false;
+    let isPinching = false;
+    let lastTapTime = 0;
 
     function getDistance(t1, t2) {
       const dx = t1.clientX - t2.clientX;
@@ -578,11 +603,14 @@
 
       if (e.touches.length === 1) {
         isTouching = true;
+        isPinching = false;
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
         initialPanX = currentPanX;
         initialPanY = currentPanY;
       } else if (e.touches.length === 2) {
+        isTouching = false;
+        isPinching = true;
         initialPinchDist = getDistance(e.touches[0], e.touches[1]);
         initialZoom = currentZoom;
       }
@@ -596,11 +624,10 @@
       }
       if (e.target.closest('#top-bar') || e.target.closest('#slider-panel')) return;
 
-      if (e.touches.length === 1 && isTouching) {
+      if (e.touches.length === 1 && isTouching && !isPinching) {
         e.preventDefault();
         const deltaX = e.touches[0].clientX - touchStartX;
         const deltaY = e.touches[0].clientY - touchStartY;
-        // Direct natural finger panning
         currentPanX = Math.max(-600, Math.min(600, initialPanX + deltaX));
         currentPanY = Math.max(-400, Math.min(400, initialPanY + deltaY));
         syncSliders();
@@ -618,9 +645,28 @@
     displayContainer.addEventListener('touchend', (e) => {
       if (isMouseControlActive) {
         handlePointer(e, 'up');
+        return;
       }
-      if (e.touches.length === 0) isTouching = false;
-      if (e.touches.length < 2) initialPinchDist = 0;
+      if (e.target.closest('#top-bar') || e.target.closest('#slider-panel')) return;
+
+      // Handle Double-Tap solely to Toggle Controls Panel (NOT switching VR/2D)
+      if (!isPinching && e.touches.length === 0) {
+        const now = Date.now();
+        if (now - lastTapTime < 300) {
+          toggleControlsVisibility();
+          lastTapTime = 0;
+        } else {
+          lastTapTime = now;
+        }
+      }
+
+      if (e.touches.length === 0) {
+        isTouching = false;
+        isPinching = false;
+      }
+      if (e.touches.length < 2) {
+        initialPinchDist = 0;
+      }
     }, { passive: true });
 
     // Remote mouse dispatch
@@ -722,8 +768,9 @@
             statusLabel.innerText = "🟢 Connected (30/60 FPS)";
             statusLabel.style.color = "#34d399";
             startOverlay.style.display = "none";
+            gestureHint.innerText = "👆 Double-tap screen to show/hide controls";
             gestureHint.style.display = "block";
-            setTimeout(() => { gestureHint.style.display = "none"; }, 4000);
+            setTimeout(() => { gestureHint.style.display = "none"; }, 3500);
           }
         };
 
@@ -776,7 +823,7 @@
       }
     }
 
-    // Toggle 2D / VR Split Mode
+    // Toggle 2D / VR Split Mode (Exclusively handled by this button)
     modeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       isVRMode = !isVRMode;
@@ -817,17 +864,6 @@
       }
       applyTransforms();
       await connectWebRTC();
-    });
-
-    // Double tap screen (outside control panels) to toggle 2D / VR
-    let lastTap = 0;
-    window.addEventListener('touchend', (e) => {
-      if (e.target.closest('#top-bar') || e.target.closest('#slider-panel')) return;
-      const now = new Date().getTime();
-      if (now - lastTap < 350) {
-        modeBtn.click();
-      }
-      lastTap = now;
     });
   </script>
 </body>
