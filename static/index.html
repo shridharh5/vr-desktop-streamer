@@ -29,7 +29,6 @@
       position: absolute;
       top: 0;
       left: 0;
-      cursor: crosshair;
     }
 
     /* 2D Mode */
@@ -44,14 +43,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+      position: relative;
     }
     .mode-2d #pane-right {
-      display: none;
-    }
-    .mode-2d video {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
+      display: none !important;
     }
 
     /* VR Mode: Pure Side-by-Side (SBS) split */
@@ -74,7 +70,7 @@
       border-left: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    /* Video transforms controlled dynamically via JS sliders */
+    /* Video transforms controlled dynamically via JS */
     .video-wrapper {
       width: 100%;
       height: 100%;
@@ -83,6 +79,7 @@
       justify-content: center;
       will-change: transform;
       position: relative;
+      touch-action: none;
     }
     video {
       width: 100%;
@@ -94,17 +91,17 @@
     /* Virtual Pointer Reticle on Screen */
     .virtual-cursor {
       position: absolute;
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       border: 2px solid #38bdf8;
-      background: rgba(56, 189, 248, 0.3);
+      background: rgba(56, 189, 248, 0.35);
       border-radius: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none;
       z-index: 50;
       display: none;
-      box-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
-      transition: width 0.1s, height 0.1s;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.9);
+      transition: transform 0.05s linear;
     }
     .virtual-cursor::after {
       content: '';
@@ -118,54 +115,65 @@
       transform: translate(-50%, -50%);
     }
     .virtual-cursor.clicking {
-      width: 26px;
-      height: 26px;
-      background: rgba(239, 68, 68, 0.5);
+      width: 28px;
+      height: 28px;
+      background: rgba(239, 68, 68, 0.6);
       border-color: #ef4444;
     }
 
-    /* Top Floating Controls Bar */
+    /* Top Floating Header Controls */
     #top-bar {
       position: absolute;
-      top: 12px;
+      top: 10px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       align-items: center;
-      gap: 10px;
-      z-index: 100;
-      background: rgba(15, 23, 42, 0.88);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 6px 14px;
+      gap: 8px;
+      z-index: 300;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 6px 12px;
       border-radius: 30px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      max-width: 95vw;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      max-width: 96vw;
       overflow-x: auto;
     }
     .btn {
       background: #0284c7;
       color: white;
       border: none;
-      padding: 7px 14px;
+      padding: 7px 13px;
       font-size: 0.8rem;
       font-weight: 600;
       border-radius: 20px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       white-space: nowrap;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.1s;
     }
     .btn:active {
-      background: #0369a1;
+      transform: scale(0.96);
     }
     .btn-toggle {
       background: #475569;
     }
+    .btn-mouse {
+      background: #10b981;
+    }
+    .btn-mouse.active {
+      background: #ef4444;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    }
     .btn-panel {
       background: #334155;
+    }
+    .btn-panel.active {
+      background: #0284c7;
+      border: 1px solid #38bdf8;
     }
     .status-text {
       color: #94a3b8;
@@ -173,26 +181,43 @@
       white-space: nowrap;
     }
 
-    /* Floating VR Sliders Adjustment Panel */
+    /* Floating View Adjustment Panel */
     #slider-panel {
       position: absolute;
-      bottom: 20px;
+      bottom: 18px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      padding: 14px 20px;
-      border-radius: 16px;
-      z-index: 120;
-      backdrop-filter: blur(12px);
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid #38bdf8;
+      padding: 16px 20px;
+      border-radius: 18px;
+      z-index: 350;
+      backdrop-filter: blur(14px);
       color: #e2e8f0;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-      min-width: 320px;
-      opacity: 0.95;
-      transition: opacity 0.2s;
+      gap: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      width: 90vw;
+      max-width: 360px;
+      touch-action: pan-y;
+    }
+    .panel-title {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #38bdf8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 6px;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      cursor: pointer;
     }
     .slider-row {
       display: flex;
@@ -211,19 +236,31 @@
     }
     input[type=range] {
       width: 100%;
-      height: 6px;
-      border-radius: 3px;
+      height: 8px;
+      border-radius: 4px;
       background: #334155;
       outline: none;
       -webkit-appearance: none;
     }
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       background: #38bdf8;
       cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+    .action-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .action-row .btn {
+      flex: 1;
+      justify-content: center;
+      padding: 6px 10px;
+      font-size: 0.75rem;
     }
 
     /* Start / Permission Overlay */
@@ -238,7 +275,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 200;
+      z-index: 500;
       color: white;
       text-align: center;
       padding: 24px;
@@ -280,6 +317,23 @@
       max-height: 90px;
       overflow-y: auto;
     }
+
+    /* Mouse Mode Banner */
+    #mouse-banner {
+      position: absolute;
+      top: 55px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(16, 185, 129, 0.9);
+      color: white;
+      padding: 4px 14px;
+      border-radius: 14px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      z-index: 250;
+      pointer-events: none;
+      display: none;
+    }
   </style>
 </head>
 <body class="mode-2d">
@@ -287,35 +341,58 @@
   <div id="start-overlay">
     <div class="card">
       <h1>📺 Desktop Streamer</h1>
-      <p>Direct low-latency desktop stream with full remote mouse pointer, zoom & eye IPD shift controls.</p>
+      <p>Direct low-latency desktop stream with separated view adjustments and remote mouse controls.</p>
       <button class="btn" id="big-start-btn">▶ Connect & Start Stream</button>
       <div id="log-view">> Tap button to connect...</div>
     </div>
   </div>
 
+  <div id="mouse-banner">🖱️ Remote Mouse Control Active (Tap anywhere to click & drag)</div>
+
   <div id="top-bar">
     <span class="status-text" id="status-label">⚪ Connecting...</span>
-    <button class="btn btn-toggle" id="mode-btn">🥽 Switch to VR Split</button>
-    <button class="btn btn-panel" id="tune-btn">⚙️ Adjust VR</button>
+    <button class="btn btn-mouse" id="mouse-btn">🖱️ Mouse: OFF</button>
+    <button class="btn btn-toggle" id="mode-btn">🥽 VR Split</button>
+    <button class="btn btn-panel" id="tune-btn">⚙️ Adjust View</button>
     <button class="btn" id="fs-btn">⛶ Fullscreen</button>
   </div>
 
-  <!-- Sliders Adjustment Panel for VR Mode -->
+  <!-- Sliders Adjustment Panel -->
   <div id="slider-panel" style="display: none;">
+    <div class="panel-title">
+      <span>⚙️ View Adjustments</span>
+      <button class="close-btn" id="close-panel-btn">✕</button>
+    </div>
+
+    <!-- Zoom Slider (Works in both 2D and VR mode) -->
     <div class="slider-row">
       <div class="slider-header">
         <span>🔍 Zoom Scale</span>
         <span class="val" id="zoom-val">100%</span>
       </div>
-      <input type="range" id="zoom-slider" min="0.5" max="2.0" step="0.05" value="1.0">
+      <input type="range" id="zoom-slider" min="0.4" max="2.5" step="0.05" value="1.0">
     </div>
 
+    <!-- Pan Offset Slider (Scroll desktop view left/right) -->
     <div class="slider-row">
       <div class="slider-header">
-        <span>↔️ Horizontal Eye Shift (IPD)</span>
+        <span>↔️ Pan Position (Scroll X)</span>
+        <span class="val" id="pan-val">0 px</span>
+      </div>
+      <input type="range" id="pan-slider" min="-300" max="300" step="5" value="0">
+    </div>
+
+    <!-- Horizontal IPD Shift Slider (Exclusive for VR mode eye spacing) -->
+    <div class="slider-row" id="ipd-container">
+      <div class="slider-header">
+        <span>👀 Eye Spacing Shift (IPD)</span>
         <span class="val" id="ipd-val">0 px</span>
       </div>
       <input type="range" id="ipd-slider" min="-120" max="120" step="2" value="0">
+    </div>
+
+    <div class="action-row">
+      <button class="btn btn-toggle" id="reset-view-btn">↺ Reset View</button>
     </div>
   </div>
 
@@ -342,42 +419,61 @@
     const cursorLeft = document.getElementById('cursor-left');
     const cursorRight = document.getElementById('cursor-right');
     const statusLabel = document.getElementById('status-label');
+    const mouseBtn = document.getElementById('mouse-btn');
+    const mouseBanner = document.getElementById('mouse-banner');
     const modeBtn = document.getElementById('mode-btn');
     const tuneBtn = document.getElementById('tune-btn');
     const fsBtn = document.getElementById('fs-btn');
     const startOverlay = document.getElementById('start-overlay');
     const bigStartBtn = document.getElementById('big-start-btn');
     const logView = document.getElementById('log-view');
+
     const sliderPanel = document.getElementById('slider-panel');
+    const closePanelBtn = document.getElementById('close-panel-btn');
+    const resetViewBtn = document.getElementById('reset-view-btn');
     const zoomSlider = document.getElementById('zoom-slider');
+    const panSlider = document.getElementById('pan-slider');
     const ipdSlider = document.getElementById('ipd-slider');
     const zoomVal = document.getElementById('zoom-val');
+    const panVal = document.getElementById('pan-val');
     const ipdVal = document.getElementById('ipd-val');
+    const ipdContainer = document.getElementById('ipd-container');
     const displayContainer = document.getElementById('display-container');
 
     let isVRMode = false;
+    let isMouseControlActive = false; // Mouse control starts OFF so you can freely touch the UI & adjust sliders
     let streamObj = null;
     let pc = null;
 
-    // Adjustable VR parameters
+    // View adjustment parameters
     let currentZoom = 1.0;
-    let currentIPDShift = 0; // px shift: positive moves towards each other, negative away
+    let currentPanX = 0;
+    let currentIPDShift = 0; // Positive: moves towards center, Negative: moves outward
 
     function applyTransforms() {
       if (isVRMode) {
-        // Left eye: shifted right by currentIPDShift
-        wrapLeft.style.transform = `scale(${currentZoom * 0.92}) translateX(${currentIPDShift}px)`;
-        // Right eye: shifted left by currentIPDShift (moving towards each other)
-        wrapRight.style.transform = `scale(${currentZoom * 0.92}) translateX(${-currentIPDShift}px)`;
+        ipdContainer.style.display = 'flex';
+        // Left eye: zoomed, panned, shifted right towards center by currentIPDShift
+        wrapLeft.style.transform = `scale(${currentZoom * 0.92}) translate(${currentPanX + currentIPDShift}px, 0)`;
+        // Right eye: zoomed, panned, shifted left towards center by currentIPDShift
+        wrapRight.style.transform = `scale(${currentZoom * 0.92}) translate(${currentPanX - currentIPDShift}px, 0)`;
       } else {
-        wrapLeft.style.transform = `scale(${currentZoom})`;
-        wrapRight.style.transform = `scale(${currentZoom})`;
+        ipdContainer.style.display = 'none';
+        wrapLeft.style.transform = `scale(${currentZoom}) translate(${currentPanX}px, 0)`;
+        wrapRight.style.transform = `scale(${currentZoom}) translate(${currentPanX}px, 0)`;
       }
     }
 
+    // Slider Listeners
     zoomSlider.addEventListener('input', (e) => {
       currentZoom = parseFloat(e.target.value);
       zoomVal.innerText = `${Math.round(currentZoom * 100)}%`;
+      applyTransforms();
+    });
+
+    panSlider.addEventListener('input', (e) => {
+      currentPanX = parseInt(e.target.value);
+      panVal.innerText = `${currentPanX} px`;
       applyTransforms();
     });
 
@@ -387,11 +483,49 @@
       applyTransforms();
     });
 
+    resetViewBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentZoom = 1.0;
+      currentPanX = 0;
+      currentIPDShift = 0;
+      zoomSlider.value = 1.0;
+      panSlider.value = 0;
+      ipdSlider.value = 0;
+      zoomVal.innerText = "100%";
+      panVal.innerText = "0 px";
+      ipdVal.innerText = "0 px";
+      applyTransforms();
+    });
+
+    // Panel Toggle
     tuneBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const isVisible = sliderPanel.style.display !== 'none';
       sliderPanel.style.display = isVisible ? 'none' : 'flex';
-      tuneBtn.style.background = isVisible ? '#334155' : '#0284c7';
+      tuneBtn.classList.toggle('active', !isVisible);
+    });
+
+    closePanelBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sliderPanel.style.display = 'none';
+      tuneBtn.classList.remove('active');
+    });
+
+    // Toggle Remote Mouse Control ON / OFF
+    mouseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isMouseControlActive = !isMouseControlActive;
+      if (isMouseControlActive) {
+        mouseBtn.innerText = "🖱️ Mouse: ON";
+        mouseBtn.classList.add('active');
+        mouseBanner.style.display = 'block';
+        setTimeout(() => { mouseBanner.style.display = 'none'; }, 2500);
+      } else {
+        mouseBtn.innerText = "🖱️ Mouse: OFF";
+        mouseBtn.classList.remove('active');
+        cursorLeft.style.display = 'none';
+        cursorRight.style.display = 'none';
+      }
     });
 
     function log(text) {
@@ -400,7 +534,7 @@
       logView.scrollTop = logView.scrollHeight;
     }
 
-    // Remote mouse event dispatch to PC backend
+    // Remote mouse dispatch
     let lastMoveTime = 0;
     function sendMouseInput(action, normX, normY, button = 1) {
       fetch('/input/mouse', {
@@ -410,7 +544,6 @@
       }).catch(() => {});
     }
 
-    // Update virtual cursor positions on screen
     function updateCursors(normX, normY) {
       const leftRect = wrapLeft.getBoundingClientRect();
       cursorLeft.style.display = 'block';
@@ -428,6 +561,12 @@
     }
 
     function handlePointer(e, actionType) {
+      // Only process mouse pointer movements when mouse control is toggled ON
+      if (!isMouseControlActive) return;
+
+      // Ignore touches on UI controls
+      if (e.target.closest('#top-bar') || e.target.closest('#slider-panel')) return;
+
       let clientX = e.clientX;
       let clientY = e.clientY;
       if (e.touches && e.touches.length > 0) {
@@ -435,7 +574,6 @@
         clientY = e.touches[0].clientY;
       }
 
-      // Determine active target pane rect
       const targetPane = (!isVRMode || clientX < window.innerWidth / 2) ? wrapLeft : wrapRight;
       const rect = targetPane.getBoundingClientRect();
 
@@ -449,7 +587,7 @@
 
       if (actionType === 'move') {
         const now = Date.now();
-        if (now - lastMoveTime > 30) { // Throttle to 30ms for responsiveness
+        if (now - lastMoveTime > 30) {
           sendMouseInput('move', normX, normY);
           lastMoveTime = now;
         }
@@ -470,16 +608,18 @@
     displayContainer.addEventListener('mouseup', (e) => handlePointer(e, 'up'));
 
     displayContainer.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      handlePointer(e, 'move');
+      if (isMouseControlActive) {
+        e.preventDefault();
+        handlePointer(e, 'move');
+      }
     }, { passive: false });
 
     displayContainer.addEventListener('touchstart', (e) => {
-      handlePointer(e, 'down');
+      if (isMouseControlActive) handlePointer(e, 'down');
     }, { passive: true });
 
     displayContainer.addEventListener('touchend', (e) => {
-      handlePointer(e, 'up');
+      if (isMouseControlActive) handlePointer(e, 'up');
     }, { passive: true });
 
     async function connectWebRTC() {
@@ -569,13 +709,12 @@
       isVRMode = !isVRMode;
       if (isVRMode) {
         document.body.className = "mode-vr";
-        modeBtn.innerText = "📺 Switch to 2D Mode";
+        modeBtn.innerText = "📺 2D Mode";
         modeBtn.style.background = "#0284c7";
       } else {
         document.body.className = "mode-2d";
-        modeBtn.innerText = "🥽 Switch to VR Split";
+        modeBtn.innerText = "🥽 VR Split";
         modeBtn.style.background = "#475569";
-        sliderPanel.style.display = "none";
       }
       applyTransforms();
     });
@@ -603,6 +742,7 @@
       if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock('landscape').catch(() => {});
       }
+      applyTransforms();
       await connectWebRTC();
     });
 
